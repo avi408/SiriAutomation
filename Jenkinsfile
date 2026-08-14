@@ -1,44 +1,83 @@
 pipeline {
+
     agent any
 
     stages {
 
         stage('Checkout') {
             steps {
-                git(
-                    url: 'https://github.com/avi408/SiriAutomation.git',
-                    branch: 'main',
-                    credentialsId: 'github-avi408'
-                )
+                echo 'Checking out SiriAutomation from GitHub...'
+                checkout scm
+            }
+        }
+
+        stage('Environment Check') {
+            steps {
+                sh '''
+                    echo "======================================"
+                    echo "Environment Information"
+                    echo "======================================"
+
+                    echo "Python:"
+                    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 --version
+
+                    echo "Git:"
+                    git --version
+
+                    echo "Node:"
+                    node --version || true
+
+                    echo "npm:"
+                    npm --version || true
+
+                    echo "Appium:"
+                    appium --version || true
+                '''
             }
         }
 
         stage('Install Dependencies') {
-    steps {
-        sh '''
-            /opt/homebrew/bin/python3.14 --version
-            /opt/homebrew/bin/python3.14 -m venv .venv
+            steps {
+                sh '''
+                    echo "======================================"
+                    echo "Creating Python virtual environment"
+                    echo "======================================"
 
-            source .venv/bin/activate
+                    PYTHON=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3
 
-            python --version
-            pip install --upgrade pip
-            pip install -r requirements.txt
-        '''
-    }
-}
+                    $PYTHON -m venv .venv
+
+                    source .venv/bin/activate
+
+                    echo "Python version:"
+                    python --version
+
+                    echo "Upgrading pip..."
+                    pip install --upgrade pip
+
+                    echo "Installing project dependencies..."
+                    pip install -r requirements.txt
+                '''
+            }
+        }
 
         stage('Run Tests') {
             steps {
                 sh '''
+                    echo "======================================"
+                    echo "Running Behave Tests"
+                    echo "======================================"
+
                     source .venv/bin/activate
-                    behave --no-capture
+
+                    behave
                 '''
             }
         }
     }
 
     post {
+
         always {
             echo 'Test execution completed.'
         }
