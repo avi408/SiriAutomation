@@ -1,0 +1,24 @@
+####################################################
+# Siri Automation Framework Configuration
+####################################################
+environment: local
+
+appium:
+  server: "http://127.0.0.1:4723"
+
+device:
+  platformName: "iOS"
+  automationName: "XCUITest"
+  platformVersion: "26.5"
+  deviceName: "iPhone 17 Pro"
+
+application:
+  bundleId: ""
+  appPath: ""
+
+timeouts:
+  implicit: 0
+  explicit: 20
+
+logging:
+  level: INFO
