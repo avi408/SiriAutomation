@@ -39,23 +39,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "======================================"
-                    echo "Creating Python virtual environment"
-                    echo "======================================"
-
                     PYTHON=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3
 
+                    echo "Creating virtual environment..."
                     $PYTHON -m venv .venv
 
                     source .venv/bin/activate
 
-                    echo "Python version:"
+                    echo "Python:"
                     python --version
 
-                    echo "Upgrading pip..."
+                    echo "Installing dependencies..."
                     pip install --upgrade pip
-
-                    echo "Installing project dependencies..."
                     pip install -r requirements.txt
                 '''
             }
@@ -64,13 +59,14 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    echo "======================================"
-                    echo "Running Behave Tests"
-                    echo "======================================"
-
                     source .venv/bin/activate
 
-                    behave
+                    mkdir -p reports
+
+                    behave \
+                        -f pretty \
+                        -f html \
+                        -o reports/behave-report.html
                 '''
             }
         }
@@ -80,6 +76,15 @@ pipeline {
 
         always {
             echo 'Test execution completed.'
+
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports',
+                reportFiles: 'behave-report.html',
+                reportName: 'Behave HTML Report'
+            ])
         }
 
         success {
