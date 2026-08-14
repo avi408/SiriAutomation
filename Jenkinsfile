@@ -14,15 +14,19 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-            steps {
-                sh '''
-                    python3 -m venv .venv
-                    source .venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
-            }
-        }
+    steps {
+        sh '''
+            /opt/homebrew/bin/python3.14 --version
+            /opt/homebrew/bin/python3.14 -m venv .venv
+
+            source .venv/bin/activate
+
+            python --version
+            pip install --upgrade pip
+            pip install -r requirements.txt
+        '''
+    }
+}
 
         stage('Run Tests') {
             steps {
