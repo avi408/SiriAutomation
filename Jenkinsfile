@@ -1,6 +1,13 @@
 pipeline {
-
     agent any
+
+    environment {
+        PYTHON = "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3"
+        APPIUM = "/opt/homebrew/bin/appium"
+        XRUN = "/usr/bin/xcrun"
+        DEVICE = "iPhone 17 Pro"
+        APPIUM_URL = "http://127.0.0.1:4723"
+    }
 
     stages {
 
@@ -14,15 +21,11 @@ pipeline {
         stage('Environment Check') {
             steps {
                 sh '''
-                    echo "======================================"
-                    echo "Environment Information"
-                    echo "======================================"
-
-                    echo "Python:"
-                    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 --version
-
-                    echo "Git:"
+                    echo "===== Environment ====="
+                    $PYTHON --version
                     git --version
+                    $APPIUM --version
+                    $XRUN simctl list devices
                 '''
             }
         }
@@ -30,34 +33,78 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    PYTHON=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3
+                    echo "Creating Python virtual environment..."
 
-                    echo "Creating virtual environment..."
-                    $PYTHON -m venv .venv
+                    rm -rf .jenkins-venv
 
-                    source .venv/bin/activate
+                    $PYTHON -m venv .jenkins-venv
 
-                    echo "Python:"
+                    . .jenkins-venv/bin/activate
+
                     python --version
-
-                    echo "Installing dependencies..."
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
             }
         }
 
-        stage('Run Tests') {
+        stage('Boot iPhone Simulator') {
             steps {
                 sh '''
-                    source .venv/bin/activate
+                    echo "Checking iPhone 17 Pro..."
+
+                    $XRUN simctl boot "$DEVICE" 2>/dev/null || true
+
+                    open -a Simulator
+
+                    echo "Waiting for simulator..."
+                    $XRUN simctl bootstatus "$DEVICE" -b
+
+                    echo "Simulator is ready."
+                '''
+            }
+        }
+
+        stage('Start Appium') {
+            steps {
+                sh '''
+                    echo "Starting Appium..."
+
+                    nohup $APPIUM \
+                        --address 127.0.0.1 \
+                        --port 4723 \
+                        > appium.log 2>&1 &
+
+                    echo $! > appium.pid
+
+                    echo "Waiting for Appium..."
+
+                    for i in {1..30}; do
+                        if curl -s "$APPIUM_URL/status" > /dev/null; then
+                            echo "Appium is ready."
+                            break
+                        fi
+
+                        sleep 2
+                    done
+
+                    curl -s "$APPIUM_URL/status"
+                '''
+            }
+        }
+
+        stage('Run Siri Tests') {
+            steps {
+                sh '''
+                    . .jenkins-venv/bin/activate
 
                     mkdir -p reports
 
                     behave \
-                        -f pretty \
-                        -f json \
-                        -o reports/behave-report.json
+                        features/weather.feature \
+                        --no-capture \
+                        --name "Ask today's weather" \
+                        | tee reports/behave-output.txt
                 '''
             }
         }
@@ -66,20 +113,28 @@ pipeline {
     post {
 
         always {
-            echo 'Test execution completed.'
+            echo 'Collecting test artifacts...'
 
-            archiveArtifacts(
-                artifacts: 'reports/**',
-                allowEmptyArchive: true
-            )
+            archiveArtifacts artifacts: 'reports/**, appium.log', 
+                             allowEmptyArchive: true
+
+            sh '''
+                if [ -f appium.pid ]; then
+                    kill $(cat appium.pid) || true
+                fi
+            '''
         }
 
         success {
-            echo 'SiriAutomation pipeline PASSED.'
+            echo '====================================='
+            echo 'SiriAutomation pipeline PASSED'
+            echo '====================================='
         }
 
         failure {
-            echo 'SiriAutomation pipeline FAILED.'
+            echo '====================================='
+            echo 'SiriAutomation pipeline FAILED'
+            echo '====================================='
         }
     }
 }
