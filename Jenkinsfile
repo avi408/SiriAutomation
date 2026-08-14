@@ -2,12 +2,13 @@ pipeline {
     agent any
 
     environment {
-        PYTHON = "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3"
-        APPIUM = "/opt/homebrew/bin/appium"
-        XRUN = "/usr/bin/xcrun"
-        DEVICE = "iPhone 17 Pro"
-        APPIUM_URL = "http://127.0.0.1:4723"
-    }
+    PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    PYTHON = "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3"
+    APPIUM = "/opt/homebrew/bin/appium"
+    XRUN = "/usr/bin/xcrun"
+    DEVICE = "iPhone 17 Pro"
+    APPIUM_URL = "http://127.0.0.1:4723"
+}
 
     stages {
 
