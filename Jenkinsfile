@@ -57,42 +57,36 @@ pipeline {
         }
 
         stage('Run Tests') {
-            steps {
-                sh '''
-                    source .venv/bin/activate
+    steps {
+        sh '''
+            source .venv/bin/activate
 
-                    mkdir -p reports
+            mkdir -p reports
 
-                    behave \
-                        -f pretty \
-                        -f html \
-                        -o reports/behave-report.html
-                '''
-            }
-        }
+            behave \
+                -f pretty \
+                -f json \
+                -o reports/behave-report.json
+        '''
     }
+}
 
     post {
 
-        always {
-            echo 'Test execution completed.'
+    always {
+        echo 'Test execution completed.'
 
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports',
-                reportFiles: 'behave-report.html',
-                reportName: 'Behave HTML Report'
-            ])
-        }
+        archiveArtifacts(
+            artifacts: 'reports/**',
+            allowEmptyArchive: true
+        )
+    }
 
-        success {
-            echo 'SiriAutomation pipeline PASSED.'
-        }
+    success {
+        echo 'SiriAutomation pipeline PASSED.'
+    }
 
-        failure {
-            echo 'SiriAutomation pipeline FAILED.'
-        }
+    failure {
+        echo 'SiriAutomation pipeline FAILED.'
     }
 }
