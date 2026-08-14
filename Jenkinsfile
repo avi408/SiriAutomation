@@ -23,15 +23,6 @@ pipeline {
 
                     echo "Git:"
                     git --version
-
-                    echo "Node:"
-                    node --version || true
-
-                    echo "npm:"
-                    npm --version || true
-
-                    echo "Appium:"
-                    appium --version || true
                 '''
             }
         }
@@ -57,36 +48,38 @@ pipeline {
         }
 
         stage('Run Tests') {
-    steps {
-        sh '''
-            source .venv/bin/activate
+            steps {
+                sh '''
+                    source .venv/bin/activate
 
-            mkdir -p reports
+                    mkdir -p reports
 
-            behave \
-                -f pretty \
-                -f json \
-                -o reports/behave-report.json
-        '''
+                    behave \
+                        -f pretty \
+                        -f json \
+                        -o reports/behave-report.json
+                '''
+            }
+        }
     }
-}
 
     post {
 
-    always {
-        echo 'Test execution completed.'
+        always {
+            echo 'Test execution completed.'
 
-        archiveArtifacts(
-            artifacts: 'reports/**',
-            allowEmptyArchive: true
-        )
-    }
+            archiveArtifacts(
+                artifacts: 'reports/**',
+                allowEmptyArchive: true
+            )
+        }
 
-    success {
-        echo 'SiriAutomation pipeline PASSED.'
-    }
+        success {
+            echo 'SiriAutomation pipeline PASSED.'
+        }
 
-    failure {
-        echo 'SiriAutomation pipeline FAILED.'
+        failure {
+            echo 'SiriAutomation pipeline FAILED.'
+        }
     }
 }
