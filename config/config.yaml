@@ -12,9 +12,9 @@ device:
   platformVersion: "26.5"
   deviceName: "iPhone 17 Pro"
 
-application:
-  bundleId: ""
-  appPath: ""
+#application:
+#  bundleId: ""
+#  appPath: ""
 
 timeouts:
   implicit: 0
@@ -22,3 +22,7 @@ timeouts:
 
 logging:
   level: INFO
+
+application:
+  bundleId: "com.apple.mobilecal"
+  appPath: ""

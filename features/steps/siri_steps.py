@@ -21,6 +21,8 @@ def step_activate(context):
 def step_ask(context, question):
     context.response = context.siri.ask_question(question)
 
+    print(f"Siri response: {context.response}")
+
 
 @then("Siri interface should be available")
 def step_verify_siri(context):
@@ -30,9 +32,42 @@ def step_verify_siri(context):
 @then("Siri should display today's weather")
 def step_today(context):
     assert context.response is not None
+    assert len(context.response.strip()) > 0
+
+    response = context.response.lower()
+
+    weather_keywords = [
+        "weather",
+        "temperature",
+        "degrees",
+        "forecast",
+        "today",
+        "°",
+    ]
+
+    assert any(
+        keyword in response
+        for keyword in weather_keywords
+    ), f"Expected weather information, but Siri returned: {context.response}"
 
 
 @then("Siri should display tomorrow's forecast")
 def step_tomorrow(context):
     assert context.response is not None
-    
+    assert len(context.response.strip()) > 0
+
+    response = context.response.lower()
+
+    forecast_keywords = [
+        "weather",
+        "temperature",
+        "degrees",
+        "forecast",
+        "tomorrow",
+        "°",
+    ]
+
+    assert any(
+        keyword in response
+        for keyword in forecast_keywords
+    ), f"Expected tomorrow's forecast, but Siri returned: {context.response}"
